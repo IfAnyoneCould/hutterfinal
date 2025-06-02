@@ -23,9 +23,9 @@ public class DataService {
 
         for (int i = 1; i <= 6; i++) {
             groupMainData.put(i, new MainData(
-                    "Initial Group " + i + " Data",
-                    100 + i * 10,
-                    "This is the initial data for group " + i + "."
+                    "Group " + i + " Money",
+                    999,
+                    "This is group " + i + "'s starting money."
             ));
         }
 
