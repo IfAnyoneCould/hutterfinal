@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Data Interaction</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f4f8;
+            padding: 1rem;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .data-box {
+            background-color: #e0f2fe;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .data-box:hover {
+            transform: translateY(-5px);
+        }
+        .action-box {
+            background-color: #d1fae5;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .action-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        .action-box.active {
+            border: 3px solid #3b82f6; /* Blue border for active/selected state */
+            box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.3); /* Glow effect */
+        }
+        select {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e1; /* Light gray border */
+            background-color: #f8fafc; /* Off-white background */
+            font-size: 1rem;
+            color: #334155; /* Darker text */
+            appearance: none; /* Remove default select arrow */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.25em 1.25em;
+        }
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="text-3xl font-bold text-gray-800 text-center mb-4">Group Data Interaction</h1>
+
+    <div class="flex items-center justify-center gap-4 mb-6">
+        <label for="group-select" class="text-lg font-medium text-gray-700">Select Group:</label>
+        <select id="group-select" class="w-48">
+            <option value="">-- Please select a group --</option>
+            <option value="1">Group 1</option>
+            <option value="2">Group 2</option>
+            <option value="3">Group 3</option>
+            <option value="4">Group 4</option>
+            <option value="5">Group 5</option>
+            <option value="6">Group 6</option>
+        </select>
+    </div>
+
+    <div id="main-data-display" class="data-box min-h-[120px] flex flex-col justify-center items-center text-gray-800">
+        <p class="text-xl font-semibold">Main Data</p>
+        <p class="text-gray-600 mt-2">Select a group to load data.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <div id="action-box-1" class="action-box flex flex-col justify-center items-center text-gray-700" data-action-type="A">
+            <p class="text-lg font-medium">Action A</p>
+            <p class="text-sm mt-1 text-gray-500">Click to trigger method A</p>
+        </div>
+        <div id="action-box-2" class="action-box flex flex-col justify-center items-center text-gray-700" data-action-type="B">
+            <p class="text-lg font-medium">Action B</p>
+            <p class="text-sm mt-1 text-gray-500">Click to trigger method B</p>
+        </div>
+        <div id="action-box-3" class="action-box flex flex-col justify-center items-center text-gray-700" data-action-type="C">
+            <p class="text-lg font-medium">Action C</p>
+            <p class="text-sm mt-1 text-gray-500">Click to trigger method C</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const groupSelect = document.getElementById('group-select');
+    const mainDataDisplay = document.getElementById('main-data-display');
+    const actionBox1 = document.getElementById('action-box-1');
+    const actionBox2 = document.getElementById('action-box-2');
+    const actionBox3 = document.getElementById('action-box-3');
+    const actionBoxes = [actionBox1, actionBox2, actionBox3];
+
+    // Base URL for your Spring Boot backend
+    // IMPORTANT: Replace with your actual backend URL (e.g., 'http://localhost:8080/api')
+    const API_BASE_URL = 'http://localhost:8080/api';
+
+    // --- Data Structures (Frontend Representation) ---
+    // These mirror the expected JSON structure from your Spring Boot backend
+    let currentMainData = null;
+    let currentActionData = [];
+
+    // Function to render main data
+    function renderMainData(data) {
+        if (!data) {
+            mainDataDisplay.innerHTML = `
+                    <p class="text-xl font-semibold">Main Data</p>
+                    <p class="text-gray-600 mt-2">Select a group to load data.</p>
+                `;
+            return;
+        }
+        mainDataDisplay.innerHTML = `
+                <p class="text-xl font-semibold">${data.name}</p>
+                <p class="text-gray-700 mt-2">Value: <span class="font-bold text-blue-700">${data.value}</span></p>
+                <p class="text-gray-600 text-sm mt-1">${data.description}</p>
+            `;
+    }
+
+    // Function to render action data
+    function renderActionData(actionDataArray) {
+        actionBoxes.forEach((box, index) => {
+            const data = actionDataArray[index];
+            if (data) {
+                box.innerHTML = `
+                        <p class="text-lg font-medium">${data.title}</p>
+                        <p class="text-sm mt-1 text-gray-500">${data.description}</p>
+                        <p class="text-xs mt-1 text-gray-400">ID: ${data.id}</p>
+                    `;
+                box.classList.remove('active'); // Remove active state on re-render
+            } else {
+                box.innerHTML = `
+                        <p class="text-lg font-medium">Action Box ${index + 1}</p>
+                        <p class="text-sm mt-1 text-gray-500">No data available</p>
+                    `;
+            }
+        });
+    }
+
+    // Function to fetch initial data for a selected group
+    async function fetchInitialData(groupNumber) {
+        if (!groupNumber) {
+            renderMainData(null);
+            renderActionData([]);
+            return;
+        }
+
+        try {
+            // Simulate API call for initial data
+            // In a real app, this would be:
+            const response = await fetch(`${API_BASE_URL}/group/${groupNumber}`);
+            const data = await response.json();
+
+            currentMainData = data.mainData;
+            currentActionData = data.actionData;
+
+            renderMainData(currentMainData);
+            renderActionData(currentActionData);
+
+        } catch (error) {
+            console.error('Error fetching initial data:', error);
+            mainDataDisplay.innerHTML = `<p class="text-red-500">Error loading data for group ${groupNumber}.</p>`;
+            renderActionData([]);
+        }
+    }
+
+    // Function to handle action box click and trigger method call
+    async function handleActionClick(event) {
+        const clickedBox = event.currentTarget;
+        const actionType = clickedBox.dataset.actionType; // 'A', 'B', or 'C'
+        const actionId = currentActionData.find(d => d.title.includes(actionType))?.id; // Get the ID from current action data
+
+        console.log("Current Main Data (before check):", currentMainData);
+        console.log("Current Action Data (before check):", currentActionData);
+        console.log("Derived Action ID:", actionId);
+
+
+        if (!currentMainData || !actionId) {
+            console.warn('No main data or action ID to perform action.');
+            return;
+        }
+
+        // Add a visual active state
+        actionBoxes.forEach(box => box.classList.remove('active'));
+        clickedBox.classList.add('active');
+
+        try {
+            // Simulate API call to trigger method and get updated data
+            // In a real app, this would be:
+            const response = await fetch(`${API_BASE_URL}/trigger-action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mainObjectId: currentMainData.id, // Assuming mainData has an ID
+                    actionId: actionId,
+                    actionType: actionType
+                })
+            });
+            const data = await response.json();
+
+            currentMainData = data.mainData;
+            currentActionData = data.actionData;
+
+            renderMainData(currentMainData);
+            renderActionData(currentActionData);
+
+        } catch (error) {
+            console.error('Error triggering action:', error);
+            mainDataDisplay.innerHTML = `<p class="text-red-500">Error performing action ${actionType}.</p>`;
+        } finally {
+            // Remove active state after a short delay or when new data is rendered
+            setTimeout(() => clickedBox.classList.remove('active'), 500);
+        }
+    }
+
+    // --- Event Listeners ---
+    groupSelect.addEventListener('change', (event) => {
+        const selectedGroup = event.target.value;
+        fetchInitialData(selectedGroup);
+    });
+
+    actionBoxes.forEach(box => {
+        box.addEventListener('click', handleActionClick);
+    });
+
+    // Initial render when the page loads
+    renderMainData(null);
+    renderActionData([]);
+
+</script>
+</body>
+</html>
