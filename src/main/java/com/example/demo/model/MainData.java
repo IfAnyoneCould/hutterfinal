@@ -34,7 +34,7 @@ public class MainData {
         switch (actionType) {
             case "A":
                 this.value += this.action[0];
-                this.description = "Value increased by 10 after Action A.";
+                this.description = "Money changed by " + this.action[0] + "after Action A.";
                 break;
             case "B":
                 this.value += this.action[1];
